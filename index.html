@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store GPS Coordinates</title>
+</head>
+<body>
+    <h1>Store GPS Coordinates</h1>
+    <p id="coordinates">Waiting for coordinates...</p>
+
+    <script>
+        // Function to get current GPS coordinates
+        function getCoordinates() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(sendCoordinates);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        // Function to send coordinates to store.php
+        function sendCoordinates(position) {
+            var latitude = position.coords.latitude;
+            var longitude = position.coords.longitude;
+
+            // Send coordinates to server using fetch API
+            fetch('store.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    latitude: latitude,
+                    longitude: longitude
+                })
+            })
+            .then(response => response.text())
+            .then(data => {
+                console.log(data); // Output response from server
+                document.getElementById('coordinates').innerText = 'Coordinates stored successfully.';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('coordinates').innerText = 'Failed to store coordinates.';
+            });
+        }
+
+        // Call getCoordinates when page loads
+        getCoordinates();
+    </script>
+</body>
+</html>
